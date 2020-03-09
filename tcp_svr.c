@@ -32,36 +32,38 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define SERVER_TCP_PORT 7000	// Default port
-#define BUFLEN	80		//Buffer length
-#define TRUE	1
+#define SERVER_TCP_PORT 8000 // Default port
+#define BUFLEN 80			 //Buffer length
+#define TRUE 1
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-	int	n, bytes_to_read;
-	int	sd, new_sd, client_len, port;
-	struct	sockaddr_in server, client;
-	char	*bp, buf[BUFLEN];
+	int n, bytes_to_read;
+	int sd, new_sd, client_len, port;
+	struct sockaddr_in server, client;
+	char *bp, buf[BUFLEN];
 
-	switch(argc)
+	switch (argc)
 	{
-		case 1:
-			port = SERVER_TCP_PORT;	// Use the default port
+	case 1:
+		port = SERVER_TCP_PORT; // Use the default port
 		break;
-		case 2:
-			port = atoi(argv[1]);	// Get user specified port
+	case 2:
+		port = atoi(argv[1]); // Get user specified port
 		break;
-		default:
-			fprintf(stderr, "Usage: %s [port]\n", argv[0]);
-			exit(1);
+	default:
+		fprintf(stderr, "Usage: %s [port]\n", argv[0]);
+		exit(1);
 	}
 
 	// Create a stream socket
 	if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
-		perror ("Can't create a socket");
+		perror("Can't create a socket");
 		exit(1);
 	}
+	if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+		printf("setsockopt(SO_REUSEADDR) failed");
 
 	// Bind an address to the socket
 	bzero((char *)&server, sizeof(struct sockaddr_in));
@@ -82,27 +84,39 @@ int main (int argc, char **argv)
 
 	while (TRUE)
 	{
-		client_len= sizeof(client);
-		if ((new_sd = accept (sd, (struct sockaddr *)&client, &client_len)) == -1)
+		client_len = sizeof(client);
+		if ((new_sd = accept(sd, (struct sockaddr *)&client, &client_len)) == -1)
 		{
 			fprintf(stderr, "Can't accept client\n");
 			exit(1);
 		}
-
-		printf(" Remote Address:  %s\n", inet_ntoa(client.sin_addr));
-		bp = buf;
-		bytes_to_read = BUFLEN;
-		while ((n = recv (new_sd, bp, bytes_to_read, 0)) < BUFLEN)
+		else
 		{
-			bp += n;
-			bytes_to_read -= n;
-		}
-		printf ("sending:%s\n", buf);
+			if (fork() == 0)
+			{
+				int pid = getpid();
+				char fn[100];
+				sprintf(fn, "%d.txt", pid);
+				FILE *of;
+				of = fopen(fn, "w");
+				while (1)
+				{
+					n = 0;
+					bp = buf;
+					bytes_to_read = BUFLEN;
+					while ((n = recv(new_sd, bp, bytes_to_read, 0)) < BUFLEN)
+					{
+						bp += n;
+						bytes_to_read -= n;
+					}
+					fprintf(of, "%s", bp);
+					fflush(of);
+				}
 
-		send (new_sd, buf, BUFLEN, 0);
-		close (new_sd);
+				fclose(of);
+			}
+		}
 	}
 	close(sd);
-	return(0);
+	return (0);
 }
-
