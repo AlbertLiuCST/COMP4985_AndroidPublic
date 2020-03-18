@@ -1,55 +1,164 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
-    <meta charset="utf-8">
-    <title>Simple Polylines</title>
     <style>
-      /* Always set the map height explicitly to define the size of the div
-       * element that contains the map. */
-      #map {
+
+form {
+  border: 3px solid #f1f1f1;
+}
+
+input[type=text], input[type=password] {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.modal {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
         height: 100%;
-      }
-      /* Optional: Makes the sample page fill the window. */
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
+        background-color: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: visible;
+        transform: scale(1.1);
+        transition: visibility 0s linear 0.25s, opacity 0.25s 0s, transform 0.25s;
+    }
+    .modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 1rem 1.5rem;
+        width: 24rem;
+        border-radius: 0.5rem;
+    }
+    .show-modal {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1.0);
+        transition: visibility 0s linear 0s, opacity 0.25s 0s, transform 0.25s;
+    }
+    .hide-modal {
+        visibility: hidden;
+    }
+
+
+    #map {
+      height: 400px;  
+      width: 100%;
+      visibility: hidden;
+     }
     </style>
+
   </head>
+  
   <body>
+    <h3>4985 A3: Location Tracker</h3>
+
+    <div class="modal">
+        <div class="modal-content">
+            <div class="container">
+            <label for="uname"><b>Username</b></label>
+            <input type="text" id="userN" placeholder="Enter Username" name="uname" required>
+
+            <label for="psw"><b>Password</b></label>
+            <input type="password" id="passW" placeholder="Enter Password" name="psw" required>
+
+            <button type="submit" id="loginBtn">Login</button>
+
+    </div>
+        </div>
+    </div>
+
     <div id="map"></div>
     <script>
+        var modal = document.querySelector(".modal");
+          var newMap = document.getElementById("map");
 
-      // This example creates a 2-pixel-wide red polyline showing the path of
-      // the first trans-Pacific flight between Oakland, CA, and Brisbane,
-      // Australia which was made by Charles Kingsford Smith.
+// Initialize and add the map
+function initMap() {
 
-      function initMap() {
-        var map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 3,
-          center: {lat: 0, lng: -180},
-          mapTypeId: 'terrain'
-        });
+  document.getElementById("loginBtn").addEventListener("click", checkLogin);
+  modal.classList.toggle("show-modal");
+  
+  var arr = [];
+  var markers = [];
+  var map = new google.maps.Map(
+      document.getElementById('map'), {zoom: 15, center: {lat: 49.2500, lng: -123.0000}});
 
-        var flightPlanCoordinates = [
-          {lat: 37.772, lng: -122.214},
-          {lat: 21.291, lng: -157.821},
-          {lat: -18.142, lng: 178.431},
-          {lat: -27.467, lng: 153.027}
-        ];
-        var flightPath = new google.maps.Polyline({
-          path: flightPlanCoordinates,
-          geodesic: true,
-          strokeColor: '#FF0000',
-          strokeOpacity: 1.0,
-          strokeWeight: 2
-        });
+  
+  fetchData().then(arr => createMarkers(arr, map, markers));
+}
 
-        flightPath.setMap(map);
-      }
+function loginSuccess() {
+    window.modal.classList.toggle("hide-modal");
+    newMap.style.visibility = "visible";
+}
+
+function checkLogin() {
+
+    if (document.getElementById('userN').value === "test" &&
+      document.getElementById('passW').value === "test") {
+        loginSuccess();
+
+    } else {
+
+      console.log("checkLogin error");
+      console.log(document.getElementsByName('uname'));
+    }
+}
+
+function fetchData() {
+    return fetch('log.txt')
+            .then(response =>
+                response.text().then(text => text.split("\n")));
+}
+
+function createMarkers(arr, myMap, markers) {
+
+  arr = formatCoordinates(arr);
+
+  for (i = 0; i< arr.length; i=i+2) {
+
+    var newLatLng = {lat: arr[i], lng: arr[i+1]};
+
+    markers.push(new google.maps.Marker({
+                        position:{lat: arr[i], lng: arr[i+1]}, 
+                        map:myMap
+                      }));
+
+  }
+
+
+
+  function formatCoordinates(arr) {
+
+    for (i = 0; i < arr.length; i++) {
+
+      arr[i] = arr[i].trim();
+      arr[i] = parseFloat(arr[i]);
+
+    }
+
+    return arr;
+
+  }
+
+
+}
+
     </script>
+    <!--Load the API from the specified URL
+    * The async attribute allows the browser to render the page while the API loads
+    * The key parameter will contain your own API key (which is not needed for this tutorial)
+    * The callback parameter executes the initMap() function
+    -->
     <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDRCzrbGije7MuDZ42Cm15WlYT6fK2D-iQ&callback=initMap">
     </script>
