@@ -17,8 +17,6 @@ server.on('listening', function(){
 server.on('connection', function(socket) {
     socket.on('data',function(data){
         let string = data.toString().substr(2);
-	console.log(string);
-	console.log(socket.readableEncoding);
         let arr =  string.split('/');
 
         let lat = arr[0];
