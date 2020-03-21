@@ -6,21 +6,30 @@ Save the following server in example.js:
 */
 
 var net = require('net');
-var fs = require('fs');6
+var fs = require('fs');
 var connections = 0;
 var server = net.createServer();
+server.on('listening', function(){
+	fs.writeFile('data.json',"{}",(err)=>{
+		if (err) throw err;
+	});
+});
 server.on('connection', function(socket) {
     socket.on('data',function(data){
-        let string = '' + data;
-        let arr =  string.split(' ');
+        let string = data.toString().substr(2);
+	console.log(string);
+	console.log(socket.readableEncoding);
+        let arr =  string.split('/');
+
         let lat = arr[0];
-        let long = arr[1];
-        let ip = arr[2];
-        ip = ip.trim();
+	let long = arr[1];
+        let ip = socket.remoteAddress;
+	let id = arr[2];
 
         let json = {
             latitude : lat,
-            longitude : long
+            longitude : long,
+	    clientID : id
         }
         try {
             fs.readFile('data.json', (err, data) => {
@@ -44,4 +53,4 @@ server.on('connection', function(socket) {
     })
 });
 
-server.listen(8000, '192.168.1.103');
+server.listen(8000, '172.31.22.207');
