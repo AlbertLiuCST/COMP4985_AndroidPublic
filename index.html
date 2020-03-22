@@ -84,16 +84,22 @@ input[type=text], input[type=password] {
 // Initialize and add the map
 function initMap() {
 
-  document.getElementById("loginBtn").addEventListener("click", checkLogin);
-  modal.classList.toggle("show-modal");
-  
+  var mapJSON;
+  fetchData().then(result => mapJSON = result);
+
   var arr = [];
   var markers = [];
   var map = new google.maps.Map(
-      document.getElementById('map'), {zoom: 15, center: {lat: 49.2500, lng: -123.0000}});
+      document.getElementById('map'), {zoom: 10, center: {lat: 49.2500, lng: -123.0000}});
 
-  
-  fetchData().then(arr => createMarkers(arr, map, markers));
+  document.getElementById("loginBtn").addEventListener("click", () => 
+  {
+    checkLogin(mapJSON);
+    createMarkers(mapJSON, map, markers);
+    });
+
+  modal.classList.toggle("show-modal");
+
 }
 
 function loginSuccess() {
@@ -101,56 +107,34 @@ function loginSuccess() {
     newMap.style.visibility = "visible";
 }
 
-function checkLogin() {
+function checkLogin(map) {
 
-    if (document.getElementById('userN').value === "test" &&
+  var currentUser = map[document.getElementById('userN').value];
+    if (document.getElementById('userN').value in map &&
       document.getElementById('passW').value === "test") {
         loginSuccess();
-
-    } else {
-
-      console.log("checkLogin error");
-      console.log(document.getElementsByName('uname'));
     }
 }
 
 function fetchData() {
-    return fetch('log.txt')
-            .then(response =>
-                response.text().then(text => text.split("\n")));
+    // return fetch('../../../home/ec2-user/COMP4985_AndroidPublic/data.json')
+    return fetch('data.json')
+      .then(data => {return data.json()});
 }
 
 function createMarkers(arr, myMap, markers) {
 
-  arr = formatCoordinates(arr);
+  var currUser = arr[document.getElementById('userN').value];
 
-  for (i = 0; i< arr.length; i=i+2) {
-
-    var newLatLng = {lat: arr[i], lng: arr[i+1]};
-
+  for (i = 0; i< currUser.length; i++) {
     markers.push(new google.maps.Marker({
-                        position:{lat: arr[i], lng: arr[i+1]}, 
-                        map:myMap
+                        position: {lat: parseFloat(currUser[i]["latitude"]), 
+                                  lng: parseFloat(currUser[i]["longitude"])},
+                        map:myMap,
+                        title: currUser[i]["clientID"]
                       }));
 
   }
-
-
-
-  function formatCoordinates(arr) {
-
-    for (i = 0; i < arr.length; i++) {
-
-      arr[i] = arr[i].trim();
-      arr[i] = parseFloat(arr[i]);
-
-    }
-
-    return arr;
-
-  }
-
-
 }
 
     </script>

@@ -15,6 +15,10 @@ server.on('listening', function(){
 	});
 });
 server.on('connection', function(socket) {
+    socket.on('error',(error) =>{
+        console.log("Caught the error");
+        return;
+    });
     socket.on('data',function(data){
         let string = data.toString().substr(2);
         let arr =  string.split('/');
