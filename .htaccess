@@ -1,0 +1,4 @@
+AuthName "COMP_4985"
+AuthType Basic
+AuthUserFile /home/ec2-user/.htpasswd
+require valid-user
