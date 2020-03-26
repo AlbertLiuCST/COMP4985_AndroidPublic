@@ -15,23 +15,35 @@ server.on('listening', function(){
 	});
 });
 server.on('connection', function(socket) {
-    socket.on('error',(error) =>{
-        console.log("Caught the error");
-        return;
-    });
-    socket.on('data',function(data){
+    	socket.on('error', function(error){
+		console.error(error);
+		return ;
+	});
+	socket.on('data',function(data){
         let string = data.toString().substr(2);
         let arr =  string.split('/');
 
-        let lat = arr[0];
+	let lat = arr[0];
 	let long = arr[1];
+	
+	if(isNaN(lat) || isNaN(long)){
+		console.error(string);
+		console.error("Invalid GPS Data lat:" + lat + " long:" + long); 
+		return;
+	}
+	if(lat == "null" || long == "null"){
+		console.error("GPS data is invalid");
+		return;
+	}
+
         let ip = socket.remoteAddress;
 	let id = arr[2];
 
         let json = {
             latitude : lat,
             longitude : long,
-	    clientID : id
+	    clientID : id,
+	    timestamp : Date.now()
         }
         try {
             fs.readFile('data.json', (err, data) => {
@@ -51,7 +63,6 @@ server.on('connection', function(socket) {
             console.log(err);
             return;
           }
-        console.log(json);
     })
 });
 
